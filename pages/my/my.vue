@@ -1,6 +1,6 @@
 <template>
 	<view>
-		<!-- 轮播图 -->
+		
 	</view>
 </template>
 
@@ -8,14 +8,11 @@
 	export default {
 		data() {
 			return {
-
+				
 			}
 		},
-		onLoad() {
-
-		},
 		methods: {
-
+			
 		}
 	}
 </script>
