@@ -6,7 +6,7 @@
 				"app-plus": {
 					"titleNView": {
 						"titleText": "直播",
-						"titleAlign":"left",
+						"titleAlign": "left",
 						"buttons": [{
 							"type": "menu"
 						}]
@@ -15,25 +15,48 @@
 			}
 		}, {
 			"path": "pages/my/my",
-			"style": {}
+			"style": {
+
+			}
+		}, {
+			"path": "pages/live/live",
+			"style": {
+				"app-plus": {
+					"titleNView": false
+				}
+			}
+		}, {
+			"path": "pages/coin/coin",
+			"style": {
+				"navigationBarTitleText": "我的余额",
+				"navigationBarBackgroundColor": "#FFFFFF",
+				"navigationBarTextStyle": "black"
+			}
+		}, {
+			"path": "pages/create-live/create-live",
+			"style": {
+				"app-plus": {
+					"titleNView": false
+				}
+			}
 		}
 	],
 	"globalStyle": {
 		"navigationBarTextStyle": "white",
-		"navigationBarTitleText": "富士直播",
+		"navigationBarTitleText": "Fox-Live",
 		"navigationBarBackgroundColor": "#8745FF",
 		"backgroundColor": "#8745FF"
-	},
-	"midButton": {
-		"iconPath": "static/tabbar/min.png",
-		"iconWidth": "60px",
-		"height": "65px"
 	},
 	"tabBar": {
 		"color": "#707070",
 		"selectedColor": "#8745FF",
 		"backgroundColor": "#FFFFFF",
 		"borderStyle": "black",
+		"midButton": {
+			"iconPath": "static/tabbar/min.png",
+			"iconWidth": "60px",
+			"height": "65px"
+		},
 		"list": [{
 			"iconPath": "static/tabbar/find.png",
 			"selectedIconPath": "static/tabbar/find-selected.png",

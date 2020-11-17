@@ -11,6 +11,11 @@
 	color: #BA7ACE;
 }
 
+/* 盒子模型 */
+.b-box {
+	box-sizing: border-box;
+}
+
 /* 背景 */
 .bg-main {
 	background-color: #8745FF;
