@@ -37,7 +37,8 @@
 			"style": {
 				"app-plus": {
 					"titleNView": false
-				}
+				},
+				"backgroundColor": "#cccccc"
 			}
 		}
 	],

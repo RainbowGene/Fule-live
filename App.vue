@@ -11,7 +11,7 @@
 			// 监听tabbar 中间凸起按钮
 			uni.onTabBarMidButtonTap(() => {
 				uni.navigateTo({
-					url: "pages/create-live/create-live"
+					url: "/pages/create-live/create-live"
 				})
 			})
 		},
