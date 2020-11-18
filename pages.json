@@ -16,7 +16,15 @@
 		}, {
 			"path": "pages/my/my",
 			"style": {
-
+				"app-plus": {
+					"titleNView": {
+						"titleText": "我的",
+						"titleAlign": "left",
+						"buttons": [{
+							"type": "menu"
+						}]
+					}
+				}
 			}
 		}, {
 			"path": "pages/live/live",
@@ -39,6 +47,14 @@
 					"titleNView": false
 				},
 				"backgroundColor": "#cccccc"
+			}
+		}, {
+			"path": "liveroom/liveroom",
+			"style": {
+				"app-plus": {
+					"titleNView": false
+				},
+				"backgroundColor": "#494F54"
 			}
 		}
 	],

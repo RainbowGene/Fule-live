@@ -42,7 +42,8 @@
 				</view>
 			</view>
 			<!-- 下方按钮 -->
-			<view class="position-fixed bg-main flex align-center justify-center rounded" style="left: 100rpx;bottom: 100rpx;right: 100rpx;height: 100rpx;">
+			<view class="position-fixed bg-main flex align-center justify-center rounded" style="left: 100rpx;bottom: 100rpx;right: 100rpx;height: 100rpx;"
+			 @click="openLiveRoom">
 				<text class="text-white font-md">开始视频直播</text>
 			</view>
 		</view>
@@ -177,6 +178,16 @@
 			// 美颜美白选项改变
 			handelSliderChange(e) {
 				this[this.popupType] = e.detail.value
+			},
+			openLiveRoom() {
+				uni.navigateTo({
+					url: "../../liveroom/liveroom?options=" + JSON.stringify({
+						mode: this.mode,
+						position: this.position,
+						beauty: this.beauty,
+						whiteness: this.whiteness
+					})
+				})
 			}
 		}
 	}

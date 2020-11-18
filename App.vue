@@ -5,7 +5,7 @@
 			const domModule = weex.requireModule('dom')
 			domModule.addRule('fontFace', {
 				'fontFamily': "iconfont",
-				'src': "url('http://at.alicdn.com/t/font_2207330_ac5iuleebod.ttf')"
+				'src': "url('http://at.alicdn.com/t/font_2207330_4hoc3aj1i8.ttf')"
 			});
 
 			// 监听tabbar 中间凸起按钮
