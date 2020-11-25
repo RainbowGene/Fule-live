@@ -3,7 +3,7 @@
 		<!-- 我的余额 -->
 		<view class="rounded py-5 flex flex-column align-center justify-center bg-main">
 			<text class="text-white font-sm mb-2">当前金币</text>
-			<text class="font-weight-bold text-white" style="font-size: 60rpx;">50</text>
+			<text class="font-weight-bold text-white" style="font-size: 60rpx;">{{user?user.coin:0}}</text>
 		</view>
 		<!-- 分割线 -->
 		<view class="border-top border-light-secondary my-3"></view>
@@ -16,10 +16,10 @@
 			 @click="chooseCoin(i)" :class="activeIndex === i?'border-main':''" style="width: 210rpx;height: 150rpx;">
 				<view v-if="item.coin">
 					<text class="iconfont text-warning font-md mr-1">&#xe609;</text>
-					<text class="font-weight-bold font-md mt-1">¥{{item.coin}}</text>
+					<text class="font-weight-bold font-md mt-1">{{item.coin}}</text>
 				</view>
 				<view v-if="item.coin" class="mt-1">
-					<text class="font text-light-muted">{{item.price}}</text>
+					<text class="font text-light-muted">¥{{item.price}}</text>
 				</view>
 				<view v-else>
 					<text class="font-md text-light-muted">自定义</text>
@@ -33,7 +33,7 @@
 				<text class="iconfont text-warning font-md mr-1">&#xe609;</text>
 				<text class="font-weight-bold font-md mt-1">{{price}}</text>
 			</view>
-			<view class="bg-main rounded flex align-center justify-center ml-auto" style="width: 120rpx;height: 65rpx;">
+			<view class="bg-main rounded flex align-center justify-center ml-auto" style="width: 120rpx;height: 65rpx;" @click="pay">
 				<text class="text-white font-md">充值</text>
 			</view>
 		</view>
@@ -49,10 +49,18 @@
 <script>
 	import uniPopup from "@/components/uni-ui/uni-popup/uni-popup.vue"
 	import uniPopupDialog from "@/components/uni-ui/uni-popup/uni-popup-dialog.vue"
+	import {
+		mapState
+	} from "vuex"
 	export default {
 		components: {
 			uniPopup,
 			uniPopupDialog
+		},
+		computed: {
+			...mapState({
+				user: state => state.user
+			})
 		},
 		data() {
 			return {
@@ -110,6 +118,40 @@
 				};
 				this.price = value
 				done()
+			},
+			pay() {
+				this.$H.post('/gift/wxpay', {
+					price: this.price
+				}, {
+					token: true
+				}).then(orderInfo => {
+					console.log(orderInfo)
+					uni.requestPayment({
+						provider: "wxpay",
+						orderInfo,
+						success: (res) => {
+							console.log(res);
+							uni.showToast({
+								title: '充值成功',
+								icon: 'none'
+							});
+							// 更新用户信息
+							this.$store.dispatch('getUserInfo');
+							return uni.navigateBack({
+								delta: 1
+							})
+						},
+						fail: (err) => {
+							console.log(err);
+							uni.showToast({
+								title: '支付失败',
+								icon: 'none'
+							});
+						}
+					})
+				}).catch(err => {
+					console.log(err)
+				})
 			}
 		}
 	}

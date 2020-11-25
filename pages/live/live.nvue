@@ -1,7 +1,9 @@
 <template>
 	<view class="page">
 
-		<!-- <video class="flex-1" src="http://ivi.bupt.edu.cn/hls/cctv1hd.m3u8" autoplay :controls="false"></video> -->
+		<!-- <video class="flex-1" src="http://192.168.42.201:23483/live/n0kJOFJcs75j3IfKsCLX.flv?sign=1605961194-ceff23c5b5980d24aee4248b6b7e924c"
+		 autoplay :controls="false"></video> -->
+		<video v-if="detail.status!==0&&detail.status!==3" class="flex-1" :src="src" autoplay :controls="false"></video>
 
 		<!-- 头部 -->
 		<view style="position: fixed;left: 0;right: 0;" :style="'top:'+statusBarHeight+'px'">
@@ -9,11 +11,11 @@
 			<view style="height: 80rpx;" class="px-2 flex justify-between align-center">
 				<view style="width: 325rpx;background-color: rgba(0,0,0,0.4);" class="flex rounded-circle">
 					<view class="p">
-						<image src="/static/tabbar/min.png" style="width: 70rpx;height: 70rpx;" class="rounded-circle"></image>
+						<image :src="detail.user.avatar||'/static/tabbar/min.png'" style="width: 70rpx;height: 70rpx;" class="rounded-circle"></image>
 					</view>
 					<view class="flex-1 flex flex-column justify-center">
-						<text class="text-white font">昵称</text>
-						<text class="text-white font-sm">100</text>
+						<text class="text-white font">{{detail.user.username}}</text>
+						<text class="text-white font-sm">{{detail.look_count}}</text>
 					</view>
 					<view class="p">
 						<view class="rounded-circle flex align-center justify-center bg-danger" style="width: 70rpx;height: 70rpx;">
@@ -23,6 +25,7 @@
 				</view>
 
 				<view style="width: 325rpx;background-color: rgba(0,0,0,0.4);" class="flex rounded-circle">
+					<!-- 在线用户情况 -->
 					<scroll-view scroll-x="true" class="flex-1 flex">
 						<view class="p" v-for="i in 20" :key="i">
 							<image src="/static/tabbar/min.png" style="width: 70rpx;height: 70rpx;" class="rounded-circle"></image>
@@ -30,6 +33,7 @@
 					</scroll-view>
 					<view class="p">
 						<view class="rounded-circle flex align-center justify-center bg-danger" style="width: 70rpx;height: 70rpx;">
+							<!-- 实时观看人数 -->
 							<text class="text-white font-sm">1000</text>
 						</view>
 					</view>
@@ -42,7 +46,7 @@
 						<text class="text-warning">金币</text>
 					</view>
 					<view class="flex-1 flex flex-column justify-center">
-						<text class="text-white font">100</text>
+						<text class="text-white font">{{detail.coin}}</text>
 					</view>
 				</view>
 			</view>
@@ -98,6 +102,7 @@
 					</view>
 				</view>
 				<swiper :indicator-dots="true" :duration="500" style="height: 350rpx;" class="border-bottom border-top">
+					<!-- 礼物列表 -->
 					<swiper-item>
 						<view class="swiper-item">
 							<view class="flex flex-wrap">
@@ -128,7 +133,11 @@
 	import fGift from '@/components/live/f-gift.vue';
 	import uniPopup from "@/components/uni-ui/uni-popup/uni-popup.vue"
 	import fDanmu from "@/components/live/f-danmu.vue"
-	import mockGifts from '@/demo/gifts.js'
+	import $H from "@/common/js/request.js"
+	import $C from "@/common/js/config.js"
+	import {
+		mapState
+	} from "vuex"
 	export default {
 		components: {
 			fGift,
@@ -141,19 +150,69 @@
 				content: '',
 				isFocus: false,
 				gifts: [],
-				giftActiveId: 0
+				giftActiveId: 0,
+				id: 0,
+				detail: {
+					"created_time": "",
+					"id": 0,
+					"title": "",
+					"cover": "",
+					"user_id": 0,
+					"look_count": 0,
+					"coin": 0,
+					"key": "",
+					"status": 0,
+					"userId": 0,
+					"user": {
+						"avatar": "",
+						"id": 0,
+						"username": ""
+					}
+				},
+				sign: ""
 			}
 		},
-		onLoad() {
+		computed: {
+			...mapState({
+				socket: state => state.socket,
+				token: state => state.token
+			}),
+			src() {
+				if (this.detail.key == '' || this.sign == '') return '';
+				return `http://192.168.42.180:23483/live/${this.detail.key}.flv?sign=${this.sign}`
+			}
+		},
+		onLoad(e) {
 			let res = uni.getSystemInfoSync()
 			this.statusBarHeight = res.statusBarHeight
-			// 模拟数据
-			this.gifts = mockGifts
+			// 获取当前直播间id
+			this.id = e.id;
+			// 请求直播间数据
+			$H.get('/live/read/' + this.id).then(res => {
+				console.log(res.data);
+				this.detail = res.data;
+				this.sign = res.sign;
+
+				console.log(this.detail.status);
+			})
+
+			// 请求礼物列表
+			$H.get('/gift/list').then(res => {
+				res.map(item => {
+					item.image = $C.baseUrl.replace('/api', '') + item.image.replace(/^http:\/\/[^/]+/, "");
+				})
+				this.gifts = res;
+			})
+
+			// 加入直播间
+			this.joinOrLeaveLive('join');
 		},
 		methods: {
 			// 打开输入框
 			openInput() {
-				this.$refs.input.open()
+				this.$store.dispatch('authMethod', () => {
+					this.$refs.input.open()
+				})
 				this.isFocus = true // 聚焦
 			},
 			// 发送弹幕
@@ -197,6 +256,15 @@
 				uni.navigateTo({
 					url: "../coin/coin"
 				})
+			},
+			// 加入或离开直播间  join leave
+			joinOrLeaveLive(type) {
+				if (this.socket && this.token) {
+					this.socket.emit(type + 'Live', {
+						live_id: this.id,
+						token: this.token
+					})
+				}
 			}
 		}
 	}

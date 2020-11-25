@@ -3,6 +3,7 @@
 		{
 			"path": "pages/index/index",
 			"style": {
+				"enablePullDownRefresh": true,
 				"app-plus": {
 					"titleNView": {
 						"titleText": "直播",
@@ -49,12 +50,23 @@
 				"backgroundColor": "#cccccc"
 			}
 		}, {
-			"path": "liveroom/liveroom",
+			"path": "pages/liveroom/liveroom",
 			"style": {
 				"app-plus": {
 					"titleNView": false
 				},
 				"backgroundColor": "#494F54"
+			}
+		}, {
+			"path": "pages/login/login",
+			"style": {
+				"navigationBarTitleText": "登录注册"
+			}
+		}, {
+			"path": "pages/user-set/user-set",
+			"style": {
+				"navigationBarTitleText": "我的设置",
+				"enablePullDownRefresh": false
 			}
 		}
 	],

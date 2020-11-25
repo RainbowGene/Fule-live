@@ -8,7 +8,7 @@
 		<!-- v-if="showBars" 包裹除了推流组件的所有组件，为了解决退出页面的黑边问题 -->
 		<!-- <view v-if="showBars"> -->
 		<view style="position: fixed;left: 0;right: 0;height: 600rpx;" :style="'top:'+statusBarHeight+'px;'">
-			<view class="flex align-center justify-center" style="width: 90rpx;height: 90rpx;">
+			<view class="flex align-center justify-center" style="width: 90rpx;height: 90rpx;" @click="closePage">
 				<text class="iconfont text-white">&#xe617;</text>
 			</view>
 			<!-- 中间部分 -->
@@ -181,12 +181,17 @@
 			},
 			openLiveRoom() {
 				uni.navigateTo({
-					url: "../../liveroom/liveroom?options=" + JSON.stringify({
+					url: "../liveroom/liveroom?options=" + JSON.stringify({
 						mode: this.mode,
 						position: this.position,
 						beauty: this.beauty,
 						whiteness: this.whiteness
 					})
+				})
+			},
+			closePage() {
+				uni.navigateBack({
+					delta: 1
 				})
 			}
 		}
