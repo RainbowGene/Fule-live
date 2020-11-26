@@ -3,7 +3,7 @@
 		<!-- 未登录 -->
 		<view v-if="!user" class="flex align-center">
 			<view class="flex align-center justify-center" style="height: 180rpx;width: 180rpx;">
-				<image src="../../static/gift/3.png" class="rounded-circle" style="width: 105rpx;height: 105rpx;"></image>
+				<image src="../../static/deavatar.jpg" class="rounded-circle" style="width: 105rpx;height: 105rpx;"></image>
 			</view>
 			<view class="flex flex-column">
 				<text class="font-md mb-2">未登录</text>
@@ -18,7 +18,7 @@
 		<!-- 登录 -->
 		<view v-else class="flex align-center">
 			<view class="flex align-center justify-center" style="height: 180rpx;width: 180rpx;">
-				<image :src="user.avatar||'../../static/gift/3.png'" class="rounded-circle" style="width: 105rpx;height: 105rpx;"></image>
+				<image :src="user.avatar||'../../static/deavatar.jpg'" class="rounded-circle" style="width: 105rpx;height: 105rpx;"></image>
 			</view>
 			<view class="flex flex-column">
 				<text class="font-md mb-2">{{user.username}}</text>

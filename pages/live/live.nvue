@@ -3,7 +3,7 @@
 
 		<!-- <video class="flex-1" src="http://192.168.42.201:23483/live/n0kJOFJcs75j3IfKsCLX.flv?sign=1605961194-ceff23c5b5980d24aee4248b6b7e924c"
 		 autoplay :controls="false"></video> -->
-		<video v-if="detail.status!==0&&detail.status!==3" class="flex-1" :src="src" autoplay :controls="false"></video>
+		<!-- <video v-if="detail.status!==0&&detail.status!==3" class="flex-1" :src="src" autoplay :controls="false"></video> -->
 
 		<!-- 头部 -->
 		<view style="position: fixed;left: 0;right: 0;" :style="'top:'+statusBarHeight+'px'">
@@ -11,7 +11,7 @@
 			<view style="height: 80rpx;" class="px-2 flex justify-between align-center">
 				<view style="width: 325rpx;background-color: rgba(0,0,0,0.4);" class="flex rounded-circle">
 					<view class="p">
-						<image :src="detail.user.avatar||'/static/tabbar/min.png'" style="width: 70rpx;height: 70rpx;" class="rounded-circle"></image>
+						<image :src="detail.user.avatar|defaultAvatar" style="width: 70rpx;height: 70rpx;" class="rounded-circle"></image>
 					</view>
 					<view class="flex-1 flex flex-column justify-center">
 						<text class="text-white font">{{detail.user.username}}</text>
@@ -27,14 +27,14 @@
 				<view style="width: 325rpx;background-color: rgba(0,0,0,0.4);" class="flex rounded-circle">
 					<!-- 在线用户情况 -->
 					<scroll-view scroll-x="true" class="flex-1 flex">
-						<view class="p" v-for="i in 20" :key="i">
-							<image src="/static/tabbar/min.png" style="width: 70rpx;height: 70rpx;" class="rounded-circle"></image>
+						<view class="p" v-for="(item,index) in list" :key="index">
+							<image :src="item.avatar|defaultAvatar" style="width: 70rpx;height: 70rpx;" class="rounded-circle"></image>
 						</view>
 					</scroll-view>
 					<view class="p">
 						<view class="rounded-circle flex align-center justify-center bg-danger" style="width: 70rpx;height: 70rpx;">
 							<!-- 实时观看人数 -->
-							<text class="text-white font-sm">1000</text>
+							<text class="text-white font-sm">{{list.length}}</text>
 						</view>
 					</view>
 				</view>
@@ -169,17 +169,25 @@
 						"username": ""
 					}
 				},
-				sign: ""
+				sign: "",
+				list: [], //在线用户列表
 			}
 		},
 		computed: {
 			...mapState({
 				socket: state => state.socket,
-				token: state => state.token
+				token: state => state.token,
+				user: state => state.user
 			}),
 			src() {
 				if (this.detail.key == '' || this.sign == '') return '';
-				return `http://192.168.42.180:23483/live/${this.detail.key}.flv?sign=${this.sign}`
+				return `${$C.basehttp}:23483/live/${this.detail.key}.flv?sign=${this.sign}`
+			},
+		},
+		filters: {
+			defaultAvatar(url) {
+				if (!url || url === '') return '../../static/deavatar.jpg';
+				return url;
 			}
 		},
 		onLoad(e) {
@@ -189,23 +197,28 @@
 			this.id = e.id;
 			// 请求直播间数据
 			$H.get('/live/read/' + this.id).then(res => {
-				console.log(res.data);
+				// console.log(res.data);
 				this.detail = res.data;
 				this.sign = res.sign;
-
-				console.log(this.detail.status);
 			})
 
 			// 请求礼物列表
 			$H.get('/gift/list').then(res => {
-				res.map(item => {
-					item.image = $C.baseUrl.replace('/api', '') + item.image.replace(/^http:\/\/[^/]+/, "");
-				})
 				this.gifts = res;
 			})
 
+			// 监听观众改变 | 弹幕发送
+			uni.$on('live', this.handleLiveEvent)
+		},
+		onShow() {
 			// 加入直播间
 			this.joinOrLeaveLive('join');
+		},
+		destroyed() {
+			// 离开直播间
+			this.joinOrLeaveLive('leave');
+
+			uni.$off('live', this.handleLiveEvent)
 		},
 		methods: {
 			// 打开输入框
@@ -218,13 +231,18 @@
 			// 发送弹幕
 			submit() {
 				if (this.content === '') return;
-				this.$refs.danmu.send({
-					id: this.$refs.danmu.list.length + 1,
-					name: 'Gene',
-					content: this.content
+				// 提交到直播间
+				if (!this.socket) {
+					return uni.showToast({
+						title: '未连接到直播间',
+						icon: 'none'
+					});
+				}
+				this.socket.emit('comment', {
+					live_id: this.id,
+					data: this.content,
+					token: this.token
 				})
-				this.content = ''
-				this.$refs.input.close()
 			},
 			// 发送礼物
 			sendGift() {
@@ -237,14 +255,21 @@
 				let index = this.gifts.findIndex(item => item.id === this.giftActiveId)
 				if (index === -1) return;
 				let g = this.gifts[index]
-				this.$refs.gift.send({
-					username: "Gene",
-					avatar: "",
-					gift_name: g.name,
-					gift_image: g.image,
-					num: 1
+
+				if (!this.socket || !this.token) {
+					uni.navigateTo({
+						url: '../login/login',
+					});
+					return uni.showToast({
+						title: 'no login',
+						icon: 'none'
+					});
+				}
+				this.socket.emit('gift', {
+					live_id: this.id,
+					gift_id: g.id,
+					token: this.token
 				})
-				this.$refs.giftPopup.close()
 			},
 			back() {
 				uni.navigateBack({
@@ -264,6 +289,34 @@
 						live_id: this.id,
 						token: this.token
 					})
+				}
+			},
+			// 观众改变的回调
+			handleLiveEvent(e) {
+				let d = e.data;
+				// console.log(d);
+				switch (e.type) {
+					case 'online':
+						if (d.action === 'join') {
+							this.list = d.data
+						}
+						break;
+					case 'comment':
+						this.$refs.danmu.send({
+							id: this.$refs.danmu.list.length + 1,
+							name: d.user.name,
+							content: d.content
+						})
+						this.content = ''
+						this.$refs.input.close()
+						break;
+					case 'gift':
+						this.$refs.gift.send(d)
+						this.$refs.giftPopup.close()
+						this.detail.coin += (d.coin * d.num);
+						break;
+					default:
+						break;
 				}
 			}
 		}
