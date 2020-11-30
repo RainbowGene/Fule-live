@@ -18,7 +18,7 @@
 					<text class="text-white position-absolute font" style="left: 0;bottom: 0;right: 0;">更换封面</text>
 				</view>
 				<view class="flex-1 ml-2">
-					<input type="text" v-model="form.titile" placeholder="请输入标题" class="bg-success mb-2" />
+					<input type="text" v-model="form.title" placeholder="请输入标题" class="bg-success mb-2" />
 					<text class="text-white font">请选择分类</text>
 				</view>
 			</view>
@@ -82,6 +82,9 @@
 	import uniPopup from "@/components/uni-ui/uni-popup/uni-popup.vue"
 	import $H from "@/common/js/request.js"
 	import $C from "@/common/js/config.js"
+	import {
+		mapState
+	} from "vuex"
 	export default {
 		components: {
 			uniPopup
@@ -112,7 +115,7 @@
 				// showBars: true, // 解决黑边问题
 
 				form: {
-					titile: "",
+					title: "",
 					cover: ""
 				}
 			}
@@ -130,6 +133,9 @@
 		// 	this.showBars = false
 		// },
 		computed: {
+			...mapState({
+				token: state => state.token
+			}),
 			popupTitle() {
 				let o = {
 					mode: '画质',
@@ -187,12 +193,17 @@
 				this[this.popupType] = e.detail.value
 			},
 			openLiveRoom() {
-				uni.navigateTo({
-					url: "../liveroom/liveroom?options=" + JSON.stringify({
-						mode: this.mode,
-						position: this.position,
-						beauty: this.beauty,
-						whiteness: this.whiteness
+				$H.post('/live/create', this.form, {
+					token: true
+				}).then(res => {
+					uni.navigateTo({
+						url: "../liveroom/liveroom?options=" + JSON.stringify({
+								mode: this.mode,
+								position: this.position,
+								beauty: this.beauty,
+								whiteness: this.whiteness
+							}) + '&data=' +
+							encodeURIComponent(JSON.stringify(res))
 					})
 				})
 			},
@@ -206,15 +217,14 @@
 				uni.chooseImage({
 					count: 1,
 					success: (res) => {
-						console.log(res);
 						$H.upload('/upload', {
 							filePath: res.tempFilePaths[0]
 						}, (p) => {
-							console.log('jindu' + p);
+							console.log('上传进度' + p);
 						}).then(res => {
-							this.form.cover = $C.basehttp + res.url
+							this.form.cover = $C.imgUrl + res.url
 							console.log(this.form.cover);
-						}).catch(err=>{
+						}).catch(err => {
 							console.log('upload cover error');
 						})
 					}

@@ -163,7 +163,26 @@
 					icon: '\ue672',
 					event: 'openPopup',
 					params: 'more'
-				}]
+				}],
+
+				sign: '',
+				detail: {
+					"created_time": "",
+					"id": 0,
+					"title": "",
+					"cover": "",
+					"user_id": 0,
+					"look_count": 0,
+					"coin": 0,
+					"key": "",
+					"status": 0,
+					"userId": 0,
+					"user": {
+						"avatar": "",
+						"id": 0,
+						"username": ""
+					}
+				},
 			}
 		},
 		computed: {
@@ -182,11 +201,18 @@
 			this.statusBarHeight = res.statusBarHeight
 			this.windowHeight = res.windowHeight
 
-			let options = JSON.parse(e.options)
-			this.mode = options.mode
-			this.position = options.position
-			this.beauty = options.beauty
-			this.whiteness = options.whiteness
+			if (e.options) {
+				let options = JSON.parse(e.options)
+				this.mode = options.mode
+				this.position = options.position
+				this.beauty = options.beauty
+				this.whiteness = options.whiteness
+			}
+			if (e.data) {
+				let d = JSON.parse(decodeURIComponent(e.data))
+				this.detail = d.data
+				this.sign = d.sign
+			}
 		},
 		onReady() {
 			this.context = uni.createLivePusherContext('livePusher', this)

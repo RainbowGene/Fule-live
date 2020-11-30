@@ -13,6 +13,9 @@
 				this.authJump({
 					url: "/pages/create-live/create-live"
 				})
+				// uni.navigateTo({
+				// 	url:"/pages/create-live/create-live"
+				// })
 			})
 
 			// 初始化用户状态

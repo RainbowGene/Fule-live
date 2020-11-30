@@ -96,8 +96,15 @@ export default {
 		options.method = 'DELETE'
 		return this.request(options)
 	},
+	uploadimg(url, data = {}, options = {}) {
+		options.url = url
+		options.data = data
+		options.method = 'POST'
+		return this.request(options)
+	},
 	// 上传文件
 	upload(url, data, onProgress = false) {
+		let token = uni.getStorageSync('token') || ''
 		return new Promise((result, reject) => {
 			const uploadTask = uni.uploadFile({
 				url: this.common.baseUrl + url,
@@ -106,6 +113,7 @@ export default {
 				header: {
 					token
 				},
+				formData: data.formData || {},
 				success: (res) => {
 					if (res.statusCode !== 200) {
 						result(false)
