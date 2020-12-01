@@ -18,8 +18,8 @@
 					<text class="text-white position-absolute font" style="left: 0;bottom: 0;right: 0;">更换封面</text>
 				</view>
 				<view class="flex-1 ml-2">
-					<input type="text" v-model="form.title" placeholder="请输入标题" class="bg-success mb-2" />
-					<text class="text-white font">请选择分类</text>
+					<input type="text" v-model="form.title" placeholder="请输入标题" class="bg-main text-white mb-2" />
+					<!-- <text class="text-white font">请选择分类</text> -->
 				</view>
 			</view>
 			<!-- 右侧 -->
@@ -220,10 +220,9 @@
 						$H.upload('/upload', {
 							filePath: res.tempFilePaths[0]
 						}, (p) => {
-							console.log('上传进度' + p);
+							// console.log('上传进度' + p);
 						}).then(res => {
 							this.form.cover = $C.imgUrl + res.url
-							console.log(this.form.cover);
 						}).catch(err => {
 							console.log('upload cover error');
 						})

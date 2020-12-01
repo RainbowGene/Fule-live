@@ -1,7 +1,7 @@
 <template>
 	<view class="page">
 
-		<live-pusher id="livePusher" ref="livePusher" class="livePusher" :url="url" :mode="mode" :enable-camera="enableCamera"
+		<live-pusher id="livePusher" ref="livePusher" class="livePusher" :url="src" :mode="mode" :enable-camera="enableCamera"
 		 :auto-focus="true" :device-position="position" :beauty="beauty" :whiteness="whiteness" aspect="9:16" @statechange="statechange"
 		 @netstatus="netstatus" @error="error" :style="'height:'+windowHeight+'px;'" style="width: 750rpx;"></live-pusher>
 
@@ -11,11 +11,11 @@
 			<view style="height: 80rpx;" class="px-2 flex justify-between align-center">
 				<view style="width: 325rpx;background-color: rgba(0,0,0,0.4);" class="flex rounded-circle">
 					<view class="p">
-						<image src="/static/tabbar/min.png" style="width: 70rpx;height: 70rpx;" class="rounded-circle"></image>
+						<image :src="user.avatar||'/static/deavatar.jpg'" style="width: 70rpx;height: 70rpx;" class="rounded-circle"></image>
 					</view>
 					<view class="flex-1 flex flex-column justify-center">
-						<text class="text-white font">昵称</text>
-						<text class="text-white font-sm">100</text>
+						<text class="text-white font">{{user.nickname||user.username}}</text>
+						<text class="text-white font-sm">{{detail.look_count}}</text>
 					</view>
 					<view class="p">
 						<view class="rounded-circle flex align-center justify-center bg-danger" style="width: 70rpx;height: 70rpx;">
@@ -24,15 +24,16 @@
 					</view>
 				</view>
 
+				<!-- 观众头像 -->
 				<view style="width: 325rpx;background-color: rgba(0,0,0,0.4);" class="flex rounded-circle">
 					<scroll-view scroll-x="true" class="flex-1 flex">
-						<view class="p" v-for="i in 20" :key="i">
-							<image src="/static/tabbar/min.png" style="width: 70rpx;height: 70rpx;" class="rounded-circle"></image>
+						<view class="p" v-for="(item,index) in list" :key="index">
+							<image :src="item.avatar||'/static/deavatar.jpg'" style="width: 70rpx;height: 70rpx;" class="rounded-circle"></image>
 						</view>
 					</scroll-view>
 					<view class="p">
 						<view class="rounded-circle flex align-center justify-center bg-danger" style="width: 70rpx;height: 70rpx;">
-							<text class="text-white font-sm">1000</text>
+							<text class="text-white font-sm">{{list.length}}</text>
 						</view>
 					</view>
 				</view>
@@ -44,7 +45,7 @@
 						<text class="text-warning">金币</text>
 					</view>
 					<view class="flex-1 flex flex-column justify-center">
-						<text class="text-white font">100</text>
+						<text class="text-white font">{{detail.coin}}</text>
 					</view>
 				</view>
 			</view>
@@ -86,11 +87,11 @@
 				</view>
 				<!-- 更多 -->
 				<view v-else class="flex align-start justify-start">
-					<view class="flex flex-column align-center justify-center" style="width: 150rpx;height: 150rpx;">
+					<view class="flex flex-column align-center justify-center" style="width: 150rpx;height: 150rpx;" @click="pauseOrplay">
 						<text class="iconfont mb-1">&#xe61f;</text>
-						<text class="font">暂停</text>
+						<text class="font">{{isPause?'继续':'暂停'}}</text>
 					</view>
-					<view class="flex flex-column align-center justify-center" style="width: 150rpx;height: 150rpx;" @click="back">
+					<view class="flex flex-column align-center justify-center" style="width: 150rpx;height: 150rpx;" @click="quit">
 						<text class="iconfont mb-1">&#xe60a;</text>
 						<text class="font">退出</text>
 					</view>
@@ -108,6 +109,10 @@
 	import fGift from '@/components/live/f-gift.vue';
 	import uniPopup from "@/components/uni-ui/uni-popup/uni-popup.vue"
 	import fDanmu from "@/components/live/f-danmu.vue"
+	import $C from "@/common/js/config.js"
+	import {
+		mapState
+	} from "vuex"
 	export default {
 		components: {
 			fGift,
@@ -117,8 +122,6 @@
 		data() {
 			return {
 				statusBarHeight: 0,
-
-				url: '', // 推流地址
 				mode: 'SD', // 视频模式：标清
 				enableCamera: true, // 开启摄像头
 				position: 'front', // 前置(front)还是后置(back)摄像头 
@@ -183,9 +186,19 @@
 						"username": ""
 					}
 				},
+				list: [], // 观众数组
+				isStart: false, // 是否开始推流
+				isPause: false, // 是否暂停
+
+				isget: false, // 
 			}
 		},
 		computed: {
+			...mapState({
+				user: state => state.user,
+				socket: state => state.socket,
+				token: state => state.token,
+			}),
 			popupTitle() {
 				let o = {
 					mode: '画质',
@@ -194,15 +207,26 @@
 					more: '更多'
 				}
 				return o[this.popupType]
+			},
+			src() {
+				if (this.detail.key === '' || this.sign === '') {
+					return ''
+				}
+				// console.log($C.livePlayBaseUrl + `/${this.detail.key}.flv?sign=${this.sign}`);
+				return $C.livePushBaseUrl + `/${this.detail.key}.flv?sign=${this.sign}`
 			}
 		},
-		onLoad(e) {
+		created() {
 			let res = uni.getSystemInfoSync()
 			this.statusBarHeight = res.statusBarHeight
 			this.windowHeight = res.windowHeight
 
+			// 监听观众改变 | 弹幕发送
+			uni.$on('live', this.handleLiveEvent)
+		},
+		onLoad(e) {
 			if (e.options) {
-				let options = JSON.parse(e.options)
+				const options = JSON.parse(e.options)
 				this.mode = options.mode
 				this.position = options.position
 				this.beauty = options.beauty
@@ -216,9 +240,166 @@
 		},
 		onReady() {
 			this.context = uni.createLivePusherContext('livePusher', this)
+			// 开启预览
 			this.startPreview()
+			// 开始推流
+			this.start()
+		},
+		mounted() {
+			// 加入直播间
+			this.joinOrLeaveLive('join');
+		},
+		destroyed() {
+			// 离开直播间
+			this.joinOrLeaveLive('leave');
+			uni.$off('live', this.handleLiveEvent)
+		},
+		onBackPress() {
+			if (!this.isget) {
+				this.quit();
+				return true;
+			}
 		},
 		methods: {
+			// 开始推流
+			start() {
+				this.context.start({
+					success: () => {
+						this.isStart = true
+						$H.post('/live/changestatus', {
+							id: this.detail.id,
+							type: "play"
+						}, {
+							token: true
+						}).then(res => {
+							console.log('开启成功');
+							this.joinOrLeaveLive('join') // 防止短线，如果没断线它就不会重新加入，可以放心使用
+						}).catch(err => {
+							console.log('开始推流失败' + err);
+						})
+					},
+					fail: (err) => {
+						console.log("livePusher.start:fail" + JSON.stringify(err));
+					}
+				})
+			},
+			// 暂停推流
+			pause() {
+				this.context.pause({
+					success: () => {
+						this.isPause = true
+						$H.post('/live/changestatus', {
+							id: this.detail.id,
+							type: "pause"
+						}, {
+							token: true
+						})
+					}
+				})
+			},
+			// 继续推流
+			resume() {
+				this.context.resume({
+					success: () => {
+						this.isPause = false
+						$H.post('/live/changestatus', {
+							id: this.detail.id,
+							type: "play"
+						}, {
+							token: true
+						})
+					}
+				})
+			},
+			// 停止推流
+			stop() {
+				this.context.stop({
+					success: () => {
+						this.isStart = false
+						$H.post('/live/changestatus', {
+							id: this.detail.id,
+							type: "stop"
+						}, {
+							token: true
+						})
+					}
+				})
+			},
+			// 暂停|继续按钮
+			pauseOrplay() {
+				if (!this.isPause) {
+					return uni.showModal({
+						content: '是否暂停推流',
+						success: function(res) {
+							if (res.cancel) {
+								return;
+							}
+							this.pause()
+						}
+					});
+				}
+				// 继续推流
+				this.resume()
+			},
+
+			// 退出直播间
+			quit() {
+				uni.showModal({
+					content: '是否要退出直播间',
+					success: res => {
+						if (res.cancel) return;
+						this.stop();
+						this.isget = true;
+						uni.navigateBack({
+							delta: 1
+						});
+						uni.showToast({
+							title: '退出直播间成功',
+							icon: 'none'
+						});
+					}
+				});
+			},
+			// 加入或离开直播间  join leave
+			joinOrLeaveLive(type) {
+				if (this.socket && this.token) {
+					this.socket.emit(type + 'Live', {
+						live_id: this.id,
+						token: this.token
+					})
+				}
+			},
+			// 观众改变的回调 | 弹幕发送 | 赠送礼物
+			handleLiveEvent(e) {
+				let d = e.data;
+				// console.log('主播端',d);
+				switch (e.type) {
+					case 'online':
+						if (d.action === 'join') {
+							this.list = d.data
+						} else {
+							const i = this.list.findIndex(item => item.id === d.user.id)
+							if (i !== -1) {
+								this.list.splice(i, 1)
+							}
+						}
+						break;
+					case 'comment':
+						this.$refs.danmu.send({
+							id: this.$refs.danmu.list.length + 1,
+							name: d.user.name,
+							content: d.content
+						})
+						break;
+					case 'gift':
+						this.$store.dispatch('getUserInfo') // 更新信息
+						this.$refs.gift.send(d)
+						this.$refs.giftPopup.close()
+						break;
+					default:
+						break;
+				}
+			},
 			handleBottomEvent(item) {
 				this[item.event](item.params)
 			},
@@ -270,20 +451,6 @@
 			},
 			closePopup() {
 				this.$refs.popup.close()
-			},
-			back() {
-				uni.showModal({
-					content: '是否要结束当前直播？',
-					success: res => {
-						if (res.confirm) {
-							uni.navigateBack({
-								delta: 1
-							})
-						} else {
-							this.closePopup()
-						}
-					},
-				});
 			}
 		}
 	}

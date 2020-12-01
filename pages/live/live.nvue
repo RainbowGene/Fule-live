@@ -11,7 +11,7 @@
 			<view style="height: 80rpx;" class="px-2 flex justify-between align-center">
 				<view style="width: 325rpx;background-color: rgba(0,0,0,0.4);" class="flex rounded-circle">
 					<view class="p">
-						<image :src="detail.user.avatar|defaultAvatar" style="width: 70rpx;height: 70rpx;" class="rounded-circle"></image>
+						<image :src="detail.user.avatar||'/static/deavatar.jpg'" style="width: 70rpx;height: 70rpx;" class="rounded-circle"></image>
 					</view>
 					<view class="flex-1 flex flex-column justify-center">
 						<text class="text-white font">{{detail.user.username}}</text>
@@ -28,7 +28,7 @@
 					<!-- 在线用户情况 -->
 					<scroll-view scroll-x="true" class="flex-1 flex">
 						<view class="p" v-for="(item,index) in list" :key="index">
-							<image :src="item.avatar|defaultAvatar" style="width: 70rpx;height: 70rpx;" class="rounded-circle"></image>
+							<image :src="item.avatar||'/static/deavatar.jpg'" style="width: 70rpx;height: 70rpx;" class="rounded-circle"></image>
 						</view>
 					</scroll-view>
 					<view class="p">
@@ -184,12 +184,6 @@
 				return `${$C.basehttp}:23483/live/${this.detail.key}.flv?sign=${this.sign}`
 			},
 		},
-		filters: {
-			defaultAvatar(url) {
-				if (!url || url === '') return '../../static/deavatar.jpg';
-				return url;
-			}
-		},
 		onLoad(e) {
 			let res = uni.getSystemInfoSync()
 			this.statusBarHeight = res.statusBarHeight
@@ -197,7 +191,6 @@
 			this.id = e.id;
 			// 请求直播间数据
 			$H.get('/live/read/' + this.id).then(res => {
-				// console.log(res.data);
 				this.detail = res.data;
 				this.sign = res.sign;
 			})
